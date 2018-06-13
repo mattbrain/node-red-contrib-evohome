@@ -1,5 +1,8 @@
 // Evohome Status node
 const evohome = require('./evohome.js');
+const idx = (p, o) => p.reduce((xs, x) => (xs && xs[x]) ? xs[x] : null, o);
+
+
 module.exports = function(RED) {
     'use strict';
 
@@ -14,14 +17,17 @@ module.exports = function(RED) {
             evohome.login(confignode.userid, confignode.passwd, confignode.applid).then(function(session) {
 	        session.getLocations().then(function(locations) {
                     locations[0].devices.forEach(function(device) {
+                    	console.log('Trying to publish');
+                    	console.dir(device);
                         if (device.thermostat) {
                             var msgout = {
                             payload : {
                                 id : device.deviceID,
-                                name : device.name.toLowerCase(),
+                                name : device.name.toLowerCase() || device.thermostatModelType,
                                 temperature : device.thermostat.indoorTemperature,
-                                setpoint : device.thermostat.changeableValues.heatSetpoint.value} 
+                                setpoint : idx(['thermostat','changeableValues','heatSetpoint','value'],device) 
                                 }
+                         	}
                             node.send(msgout);
                         }
                     });

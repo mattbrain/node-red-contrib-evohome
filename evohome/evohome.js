@@ -8,6 +8,8 @@ const request = require('request');
 const _ = require('lodash');
 
 function UserInfo(json) {
+	console.log('->UserInfo');
+	console.dir(json);
     this.userID = json.userID;
     this.username = json.username;
     this.firstname = json.firstname;
@@ -27,9 +29,10 @@ function UserInfo(json) {
 var sessionCredentials = {};
 
 function Session(username, password, appId, json) {
-    //console.log('Session: ' + JSON.stringify(json));
+    console.log('Session: ' + JSON.stringify(json));
     this.sessionId = json.sessionId;
     this.userInfo = new UserInfo(json.userInfo);
+    console.log('-> Eula');
     this.latestEulaAccepted = json.latestEulaAccepted;
 
     sessionCredentials[this.sessionId] = {
@@ -40,6 +43,8 @@ function Session(username, password, appId, json) {
 }
 
 function Location(json) {
+	console.log('->location: FULL JSON BELOW');
+	console.dir(json);
     this.locationID = json.locationID;
     this.name = json.name;
     this.streetAddress = json.streetAddress;
@@ -48,9 +53,13 @@ function Location(json) {
     this.country = json.country;
     this.zipcode = json.zipcode;
     this.type = json.type;
+    //this.devices = _.map(json.devices, function(device) {
+    //    return new Device(device);
+    //});
     this.devices = _.map(json.devices, function(device) {
-        return new Device(device);
+        return device;
     });
+    
     this.oneTouchButtons = json.oneTouchButtons;
     this.daylightSavingTimeEnabled = json.daylightSavingTimeEnabled;
     this.timeZone = json.timeZone;
@@ -61,6 +70,8 @@ function Location(json) {
 }
 
 function Device(json) {
+	console.log('->Device');
+	console.dir(json);
     this.deviceID = json.deviceID;
     this.thermostatModelType = json.thermostatModelType;
     this.name = json.name;
@@ -68,6 +79,8 @@ function Device(json) {
 }
 
 function Thermostat(json) {
+	console.log('->Thermostat');
+	console.dir(json);
     this.units = json.units;
     this.indoorTemperature = json.indoorTemperature;
     //this.outdoorTemperature = json.outdoorTemperature;
@@ -82,6 +95,7 @@ function Thermostat(json) {
 }
 
 Session.prototype.getLocations = function() {
+	console.log('Get Locations');
     var url = "https://tccna.honeywell.com/WebAPI/api/locations?userId=" + this.userInfo.userID + "&allData=True";
     return this._request(url).then(function(json) {
         return _.map(json, function(location) {
@@ -91,6 +105,7 @@ Session.prototype.getLocations = function() {
 }
 
 Session.prototype.modifyHeatSetpoint = function(deviceId, status, targetTemperature, minutes) {
+    console.log('ModifyHeatSetPoint');
     var deferred = Q.defer();
     var url = "https://tccna.honeywell.com/WebAPI/api/devices/" + deviceId + "/thermostat/changeableValues/heatSetpoint";
     var body = null;
@@ -138,6 +153,7 @@ Session.prototype.modifyHeatSetpoint = function(deviceId, status, targetTemperat
 }
 
 Session.prototype._renew = function() {
+	console.log('_renew');
     var self = this;
     var credentials = sessionCredentials[this.sessionID];
     return login(credentials.username, credentials.password, credentials.appId).then(function(json) {
@@ -149,6 +165,7 @@ Session.prototype._renew = function() {
 }
 
 Session.prototype._request = function(url) {
+	console.log('_request');
     var deferred = Q.defer();
     request({
         method: 'GET',
@@ -180,6 +197,7 @@ Session.prototype._request = function(url) {
 }
 
 function login(username, password, appId) {
+	console.log('->Login');
     var deferred = Q.defer();
 
     var requestBody = {
@@ -198,9 +216,17 @@ function login(username, password, appId) {
         body: requestJson
     }, function(err, response) {
         if (err) {
+        	console.log(err);
             deferred.reject(err);
         } else {
-            deferred.resolve(JSON.parse(response.body));
+        	console.log(response.body);
+        	try {
+           		deferred.resolve(JSON.parse(response.body));
+           	}
+           	catch (err) {
+           		console.log('Caught Error ' + err + ' in response.body:'+response.body);
+           		deferred.reject(err);
+           	}	
         }
     });
     return deferred.promise;
