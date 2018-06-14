@@ -21,13 +21,16 @@ module.exports = function(RED) {
                     	console.dir(device);
                         if (device.thermostat) {
                             var msgout = {
-                            payload : {
+                            	payload : {
                                 id : device.deviceID,
                                 name : device.name.toLowerCase() || device.thermostatModelType,
                                 temperature : device.thermostat.indoorTemperature,
-                                setpoint : idx(['thermostat','changeableValues','heatSetpoint','value'],device) 
+                                setpoint : idx(['thermostat','changeableValues','heatSetpoint','value'],device),
+                                source : device,
+                                mode : idx(['thermostat','changeableValues','mode'],device),
+                                status : idx(['thermostat','changeableValues','status'],device) || idx(['thermostat','changeableValues','heatSetpoint','status'],device),
+                                alive : device.isAlive 
                                 }
-                         	}
                             node.send(msgout);
                         }
                     });
