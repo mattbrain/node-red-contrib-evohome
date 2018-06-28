@@ -31,6 +31,7 @@ module.exports = function(RED) {
                                 status : idx(['thermostat','changeableValues','status'],device) || idx(['thermostat','changeableValues','heatSetpoint','status'],device),
                                 alive : device.isAlive 
                                 }
+                         	}
                             node.send(msgout);
                         }
                     });
